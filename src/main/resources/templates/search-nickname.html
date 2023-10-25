@@ -252,7 +252,11 @@
           <div class="email" th:text="${user.email}">email</div>
         </div>
         <div class="follow">
-          <button class="btn btn-secondary">팔로우</button>
+          <!-- 팔로우 버튼 폼 -->
+          <form th:action="@{'/follow?followerId=' + ${#authentication.getPrincipal().getUser().getEmail()} + '&amp;followingId=' + ${user.email}}"
+                method="post">
+            <button type="submit" class="btn btn-secondary">팔로우</button>
+          </form>
         </div>
       </div>
 
@@ -263,6 +267,65 @@
 </main>
 
 </body>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+      // 팔로우 버튼에 대한 클릭 이벤트 처리
+      $('.follow-btn').on('click', function(event) {
+          event.preventDefault(); // 기본 동작을 중단
+
+          var followerId = '${#authentication.getPrincipal().getUser().getEmail()}';
+          var followingId = '${user.email}';
+
+          // 팔로우 상태를 확인하고 적절한 요청 보내기
+          $.ajax({
+              type: 'GET',
+              url: '/api/follow/status?followerId=' + followerId + '&followingId=' + followingId,
+              success: function(response) {
+                  if (response === 'following') {
+                      // 이미 팔로우 중이면 언팔로우 요청 보내기
+                      unfollowUser(followerId, followingId);
+                  } else {
+                      // 팔로우 중이 아니면 팔로우 요청 보내기
+                      followUser(followerId, followingId);
+                  }
+              },
+              error: function(error) {
+                  console.error('팔로우 상태 확인 실패:', error);
+              }
+          });
+      });
+
+      function followUser(followerId, followingId) {
+          // 팔로우 요청 보내는 코드
+          $.post('/follow', {
+              followerId: followerId,
+              followingId: followingId
+          }, function(response) {
+              // 팔로우가 성공한 경우의 처리
+              console.log('팔로우 성공:', response);
+          }).fail(function(error) {
+              // 팔로우 실패한 경우의 처리
+              console.error('팔로우 실패:', error);
+          });
+      }
+
+      function unfollowUser(followerId, followingId) {
+          // 언팔로우 요청 보내는 코드
+          $.post('/unfollow', {
+              followerId: followerId,
+              followingId: followingId
+          }, function(response) {
+              // 언팔로우가 성공한 경우의 처리
+              console.log('언팔로우 성공:', response);
+          }).fail(function(error) {
+              // 언팔로우 실패한 경우의 처리
+              console.error('언팔로우 실패:', error);
+          });
+      }
+  });
+</script>
 
 <script>
   function logoutAndRedirect() {
