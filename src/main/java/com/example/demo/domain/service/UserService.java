@@ -150,7 +150,8 @@ public class UserService {
     }
 
 
-
-
-
+    public User getUserByEmail(String email) {
+        System.out.println("getUserByEmail : " + email);
+        return userRepository.findByEmail(email);
+    }
 }

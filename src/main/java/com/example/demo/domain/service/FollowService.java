@@ -23,7 +23,9 @@ public class FollowService {
     }
 
     public void unfollow(User follower, User following){
+        System.out.println("언팔할거임!?!??!?!?!");
         Follow follow = followRepository.findByFollowerAndFollowing(follower, following);
+        System.out.println(follow);
         if (follow != null) {
             followRepository.delete(follow);
         }

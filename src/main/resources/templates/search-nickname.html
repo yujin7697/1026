@@ -14,7 +14,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/css/board.css">
+  <link rel="stylesheet" href="/static/css/board.css">
+
 
   <style>
 
@@ -252,10 +253,13 @@
           <div class="email" th:text="${user.email}">email</div>
         </div>
         <div class="follow">
-          <!-- 팔로우 버튼 폼 -->
-          <form th:action="@{'/follow?followerId=' + ${#authentication.getPrincipal().getUser().getEmail()} + '&amp;followingId=' + ${user.email}}"
+          <form class="follow-form"
+                th:attr="data-follower-id=${#authentication.getPrincipal().getUser().getEmail()}, data-following-id=${user.email}"
+                th:action="@{'/follow?followerId=' + ${#authentication.getPrincipal().getUser().getEmail()} + '&amp;followingId=' + ${user.email}}"
                 method="post">
-            <button type="submit" class="btn btn-secondary">팔로우</button>
+            <button type="button" class="btn btn-secondary follow-btn"
+                    th:data-follower-id="${user.email}"
+                    th:data-following-id="${#authentication.getPrincipal().getUser().getEmail()}">팔로우</button>
           </form>
         </div>
       </div>
@@ -269,26 +273,38 @@
 </body>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
   $(document).ready(function() {
+
+       var followerId;
+       var followingId;
+
+       // Thymeleaf로부터 데이터를 가져오기
+       followerId = decodeURIComponent($('.follow-form').attr('data-follower-id'));
+       followingId = decodeURIComponent($('.follow-form').attr('data-following-id'));
+
+      // 페이지 로드 시 팔로우 상태 가져와서 버튼 텍스트 설정
+      updateFollowButton();
+
       // 팔로우 버튼에 대한 클릭 이벤트 처리
       $('.follow-btn').on('click', function(event) {
-          event.preventDefault(); // 기본 동작을 중단
+          event.preventDefault();
 
-          var followerId = '${#authentication.getPrincipal().getUser().getEmail()}';
-          var followingId = '${user.email}';
+          // 클릭한 팔로우 버튼의 부모 요소인 form을 찾습니다.
+          var form = $(this).closest('.follow-form');
 
           // 팔로우 상태를 확인하고 적절한 요청 보내기
           $.ajax({
               type: 'GET',
-              url: '/api/follow/status?followerId=' + followerId + '&followingId=' + followingId,
+              url: 'follow/status?followerId=' + followerId + '&followingId=' + followingId,
               success: function(response) {
                   if (response === 'following') {
                       // 이미 팔로우 중이면 언팔로우 요청 보내기
-                      unfollowUser(followerId, followingId);
+                      unfollowUser(followerId, followingId, form);
                   } else {
                       // 팔로우 중이 아니면 팔로우 요청 보내기
-                      followUser(followerId, followingId);
+                      followUser(followerId, followingId, form);
                   }
               },
               error: function(error) {
@@ -297,7 +313,7 @@
           });
       });
 
-      function followUser(followerId, followingId) {
+      function followUser(followerId, followingId, form) {
           // 팔로우 요청 보내는 코드
           $.post('/follow', {
               followerId: followerId,
@@ -305,13 +321,15 @@
           }, function(response) {
               // 팔로우가 성공한 경우의 처리
               console.log('팔로우 성공:', response);
+              // 팔로우 성공 시 버튼 텍스트 변경
+              form.find('.follow-btn').text('언팔로우');
           }).fail(function(error) {
               // 팔로우 실패한 경우의 처리
               console.error('팔로우 실패:', error);
           });
       }
 
-      function unfollowUser(followerId, followingId) {
+      function unfollowUser(followerId, followingId, form) {
           // 언팔로우 요청 보내는 코드
           $.post('/unfollow', {
               followerId: followerId,
@@ -319,11 +337,38 @@
           }, function(response) {
               // 언팔로우가 성공한 경우의 처리
               console.log('언팔로우 성공:', response);
+              // 언팔로우 성공 시 버튼 텍스트 변경
+              form.find('.follow-btn').text('팔로우');
           }).fail(function(error) {
               // 언팔로우 실패한 경우의 처리
               console.error('언팔로우 실패:', error);
           });
       }
+
+      // 팔로우 버튼 텍스트 업데이트 함수
+      function updateFollowButtons() {
+            // 모든 팔로우 버튼에 대해 실행
+            $('.follow-btn').each(function() {
+                var followerId = $(this).data('follower-id');
+                var followingId = $(this).data('following-id');
+                var form = $(this).closest('.follow-form');
+
+                $.ajax({
+                    type: 'GET',
+                    url: 'follow/status?followerId=' + followerId + '&followingId=' + followingId,
+                    success: function(response) {
+                        if (response === 'following') {
+                            form.find('.follow-btn').text('언팔로우');
+                        } else {
+                            form.find('.follow-btn').text('팔로우');
+                        }
+                    },
+                    error: function(error) {
+                        console.error('팔로우 상태 가져오기 실패:', error);
+                    }
+                });
+            });
+        }
   });
 </script>
 
