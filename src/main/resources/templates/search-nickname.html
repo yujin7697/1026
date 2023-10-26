@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/static/css/board.css">
+  <link rel="stylesheet" href="/css/board.css">
 
 
   <style>
@@ -258,8 +258,8 @@
                 th:action="@{'/follow?followerId=' + ${#authentication.getPrincipal().getUser().getEmail()} + '&amp;followingId=' + ${user.email}}"
                 method="post">
             <button type="button" class="btn btn-secondary follow-btn"
-                    th:data-follower-id="${user.email}"
-                    th:data-following-id="${#authentication.getPrincipal().getUser().getEmail()}">팔로우</button>
+                    th:data-follower-id="${#authentication.getPrincipal().getUser().getEmail()}"
+                    th:data-following-id="${user.email}">팔로우</button>
           </form>
         </div>
       </div>
@@ -285,7 +285,7 @@
        followingId = decodeURIComponent($('.follow-form').attr('data-following-id'));
 
       // 페이지 로드 시 팔로우 상태 가져와서 버튼 텍스트 설정
-      updateFollowButton();
+      updateFollowButtons();
 
       // 팔로우 버튼에 대한 클릭 이벤트 처리
       $('.follow-btn').on('click', function(event) {
@@ -293,6 +293,9 @@
 
           // 클릭한 팔로우 버튼의 부모 요소인 form을 찾습니다.
           var form = $(this).closest('.follow-form');
+
+          var followerId = form.data('follower-id');
+          var followingId = form.data('following-id');
 
           // 팔로우 상태를 확인하고 적절한 요청 보내기
           $.ajax({
