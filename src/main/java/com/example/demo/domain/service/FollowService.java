@@ -6,6 +6,8 @@ import com.example.demo.domain.repository.FollowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class FollowService {
     @Autowired
@@ -29,5 +31,12 @@ public class FollowService {
         if (follow != null) {
             followRepository.delete(follow);
         }
+    }
+
+    public List<String> getFollowList(String currentUser) {
+        List<String> list = followRepository.findByFollow(currentUser);
+        System.out.println("list : " + list);
+
+        return list;
     }
 }
